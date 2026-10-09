@@ -1,0 +1,155 @@
+USE QualityAnalytics;
+GO
+IF OBJECT_ID(N'dbo.RawInspection', N'U') IS NULL
+BEGIN
+CREATE TABLE dbo.RawInspection
+(
+ RawID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+ part_id VARCHAR(50) NOT NULL,
+ timestamp DATETIME2(3) NOT NULL,
+ shift VARCHAR(20) NULL,
+ machine_id VARCHAR(30) NULL,
+ supplier VARCHAR(50) NULL,
+ cut_edge_width_mm DECIMAL(10,4) NULL,
+ defect_type VARCHAR(50) NULL,
+ scrap_flag BIT NULL,
+ received_at DATETIME2(3) NOT NULL DEFAULT SYSDATETIME(),
+ processed BIT NOT NULL DEFAULT 0,
+ processing_error VARCHAR(1000) NULL
+);
+END;
+GO
+IF OBJECT_ID(N'dbo.DimShift', N'U') IS NULL
+BEGIN
+CREATE TABLE dbo.DimShift
+(
+ Shift VARCHAR(20) NOT NULL PRIMARY KEY,
+ ShiftOrder INT NOT NULL,
+ StartTime TIME NOT NULL,
+ EndTime TIME NOT NULL
+);
+END;
+GO
+IF OBJECT_ID(N'dbo.DimDate', N'U') IS NULL
+BEGIN
+CREATE TABLE dbo.DimDate
+(
+ DateKey INT NOT NULL PRIMARY KEY,
+ [Date] DATE NOT NULL,
+ [Year] INT NOT NULL,
+ [Quarter] INT NOT NULL,
+ [Month] INT NOT NULL,
+ MonthName VARCHAR(20) NOT NULL,
+ [Day] INT NOT NULL,
+ WeekdayName VARCHAR(20) NOT NULL,
+ IsWeekend BIT NOT NULL
+);
+END;
+GO
+IF OBJECT_ID(N'dbo.DimMachine', N'U') IS NULL
+BEGIN
+CREATE TABLE dbo.DimMachine
+(
+ MachineID VARCHAR(30) NOT NULL PRIMARY KEY,
+ MachineName VARCHAR(50) NOT NULL
+);
+END;
+GO
+IF OBJECT_ID(N'dbo.DimSupplier', N'U') IS NULL
+BEGIN
+CREATE TABLE dbo.DimSupplier
+(
+ Supplier VARCHAR(50) NOT NULL PRIMARY KEY
+);
+END;
+GO
+IF OBJECT_ID(N'dbo.DimDefectType', N'U') IS NULL
+BEGIN
+CREATE TABLE dbo.DimDefectType
+(
+ DefectType VARCHAR(50) NOT NULL PRIMARY KEY,
+ DefectRank INT NOT NULL
+);
+END;
+GO
+IF OBJECT_ID(N'dbo.SPCLimits', N'U') IS NULL
+BEGIN
+CREATE TABLE dbo.SPCLimits
+(
+ SPCLimitID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+ MachineID VARCHAR(30) NOT NULL,
+ Metric VARCHAR(50) NOT NULL DEFAULT 'cut_edge_width_mm',
+ CenterLine DECIMAL(12,6) NOT NULL,
+ UCL DECIMAL(12,6) NOT NULL,
+ LCL DECIMAL(12,6) NOT NULL,
+ MRBar DECIMAL(12,6) NOT NULL,
+ SigmaHat DECIMAL(12,6) NOT NULL,
+ BaselineStart DATETIME2(3) NULL,
+ BaselineEnd DATETIME2(3) NULL,
+ BaselineSamples INT NOT NULL,
+ Active BIT NOT NULL DEFAULT 0,
+ CreatedAt DATETIME2(3) NOT NULL DEFAULT SYSDATETIME()
+);
+END;
+GO
+IF OBJECT_ID(N'dbo.FactInspection', N'U') IS NULL
+BEGIN
+CREATE TABLE dbo.FactInspection
+(
+ InspectionKey BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+ part_id VARCHAR(50) NOT NULL,
+ timestamp DATETIME2(3) NOT NULL,
+ shift VARCHAR(20) NULL,
+ machine_id VARCHAR(30) NULL,
+ supplier VARCHAR(50) NULL,
+ cut_edge_width_mm DECIMAL(10,4) NULL,
+ defect_type VARCHAR(50) NULL,
+ scrap_flag BIT NULL,
+ null_measurement BIT NOT NULL,
+ out_of_range_measurement BIT NOT NULL,
+ out_of_spec BIT NOT NULL,
+ duplicate_part_id BIT NOT NULL,
+ timestamp_gap_flag BIT NOT NULL,
+ DateKey INT NULL,
+ MovingRange DECIMAL(10,4) NULL,
+ SPC_Status VARCHAR(30) NULL,
+ Rule1_OOC BIT NOT NULL DEFAULT 0,
+ Rule2_Shift BIT NOT NULL DEFAULT 0,
+ Rule3_Trend BIT NOT NULL DEFAULT 0,
+ IsBaseline BIT NOT NULL DEFAULT 0,
+ processed_at DATETIME2(3) NOT NULL DEFAULT SYSDATETIME(),
+ CONSTRAINT UQ_FactInspection_part UNIQUE (part_id)
+);
+END;
+GO
+IF OBJECT_ID(N'dbo.SPCEvents', N'U') IS NULL
+BEGIN
+CREATE TABLE dbo.SPCEvents
+(
+ EventID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+ part_id VARCHAR(50) NULL,
+ machine_id VARCHAR(30) NULL,
+ timestamp DATETIME2(3) NOT NULL,
+ event_type VARCHAR(50) NOT NULL,
+ rule_number INT NULL,
+ measurement DECIMAL(10,4) NULL,
+ UCL DECIMAL(12,6) NULL,
+ CL DECIMAL(12,6) NULL,
+ LCL DECIMAL(12,6) NULL,
+ status VARCHAR(30) NOT NULL DEFAULT 'OPEN',
+ created_at DATETIME2(3) NOT NULL DEFAULT SYSDATETIME()
+);
+END;
+GO
+IF OBJECT_ID(N'dbo.ETL_Log', N'U') IS NULL
+BEGIN
+CREATE TABLE dbo.ETL_Log
+(
+ LogID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+ LogTime DATETIME2(3) NOT NULL DEFAULT SYSDATETIME(),
+ Component VARCHAR(50) NOT NULL,
+ Severity VARCHAR(20) NOT NULL,
+ Message VARCHAR(2000) NOT NULL
+);
+END;
+GO

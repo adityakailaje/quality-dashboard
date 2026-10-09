@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+.venv/
+*.pyc
+*.pyo
+# Secrets
+.env
+.env.*
+!.env.example
+# Local editor settings
+.vscode/
+# State and logs
+state/
+logs/
+*.log
+# Raw streaming data
+raw/*.csv
+archive/*.csv
+# Power BI local cache
+powerbi/*.pbi*/
+# SQL Server tooling metadata
+sql/.vs/
